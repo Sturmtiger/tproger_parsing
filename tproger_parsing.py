@@ -33,7 +33,7 @@ def get_article_links_from_pages(page_links: list) -> list:
     return article_links
 
 
-def get_parsed_article_data(article_links: list):
+def get_parsed_article_data(article_links: list) -> list:
     """
     Returns parsed data of each articled
     Article data types:
@@ -41,7 +41,6 @@ def get_parsed_article_data(article_links: list):
     2. body(Text)
     3. images(URLs)
     4. datePublished
-
     """
     parsed_data = list()
 
@@ -49,19 +48,29 @@ def get_parsed_article_data(article_links: list):
         response = requests.get(link)
         content = response.content
         page_element = html.fromstring(content)
-        parsed_article = {
-            'title': page_element.xpath(
+
+        title = page_element.xpath(
                 '//article[contains(@id, "post")]//h1[contains(@class, "entry-title")]/text()'
-            )[0],
-            'body': ' '.join(page_element.xpath(
-                '//div[1][contains(@class, "entry-content")]/descendant::text()')
-            ).replace('\n', ''),
-            'images': page_element.xpath(
+            )[0]
+        body = ''.join(page_element.xpath(
+            '//div[1][contains(@class, "entry-content")]/descendant::text()')
+        ).replace('\n', ''),
+        images = page_element.xpath(
                 '//div[1][contains(@class, "entry-content")]//img[not(contains(@src, "svg"))]/@src'
             ),
-            'datePublished': page_element.xpath(
+        date_published = page_element.xpath(
                 '//time[contains(@class, "entry-date")]/@datetime'
             )[0].split('T')[0]
+
+        # to avoid an exception if no data
+        title = title[0] if title else None
+        date_published = date_published[0].split('T')[0] if date_published else None
+
+        parsed_article = {
+            'title': title,
+            'body': body,
+            'images': images,
+            'datePublished': date_published,
         }
         parsed_data.append(parsed_article)
 
